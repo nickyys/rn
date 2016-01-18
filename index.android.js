@@ -3,136 +3,166 @@
  * https://github.com/facebook/react-native
  */
 'use strict';
+
 var React = require('react-native');
 var {
   AppRegistry,
-  ToolbarAndroid,
-  Image,
-  ListView,
+  Navigator,
+  PixelRatio,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
+  TouchableHighlight,
 } = React;
 
-var API_KEY = '7waqfqbprs7pajbz28mqf6vz';
-var API_URL = 'http://api.rottentomatoes.com/api/public/v1.0/lists/movies/in_theaters.json';
-var PAGE_SIZE = 25;
-var PARAMS = '?apikey=' + API_KEY + '&page_limit=' + PAGE_SIZE;
-var REQUEST_URL = API_URL + PARAMS;
+var SiteallScreen = require('./SiteallScreen');
+var BaiduScreen = require('./BaiduScreen');
+var HistoryScreen = require('./HistoryScreen');
 
+class NavButton extends React.Component {
+  render() {
+    return (
+      <TouchableHighlight
+        style={styles.button}
+        underlayColor="#B5B5B5"
+        onPress={this.props.onPress}>
+        <Text style={styles.buttonText}>{this.props.text}</Text>
+      </TouchableHighlight>
+    );
+  }
+}
+
+class NavMenu extends React.Component {
+  render() {
+    return (
+      <ScrollView style={styles.scene}>
+        <Text style={styles.messageText}>{this.props.message}</Text>
+        <NavButton
+          onPress={() => {
+            this.props.navigator.push({ id: 'siteall' });
+          }}
+          text="综合查询"
+        />
+        <NavButton
+          onPress={() => {
+            this.props.navigator.push({ id: 'baidu' });
+          }}
+          text="百度排名"
+        />
+        <NavButton
+          onPress={() => {
+            this.props.navigator.push({ id: 'history' });
+          }}
+          text="历史查询"
+        />
+      </ScrollView>
+    );
+  }
+}
 
 var test = React.createClass({
-  getInitialState: function() {
-    return {
-      dataSource: new ListView.DataSource({
-        rowHasChanged: (row1, row2) => row1 !== row2,
-      }),
-      loaded: false,
-    };
+
+  statics: {
+    title: '<Navigator>',
+    description: 'JS-implemented navigation',
   },
 
-  componentDidMount: function() {
-    this.fetchData();
-  },
-
-  fetchData: function() {
-    fetch(REQUEST_URL)
-      .then((response) => response.json())
-      .then((responseData) => {
-        this.setState({
-          dataSource: this.state.dataSource.cloneWithRows(responseData.movies),
-          loaded: true,
-        });
-      })
-      .done();
-  },
-
-
-  //渲染函数
-  render: function() {
-    if (!this.state.loaded) {
-      return this.renderLoadingView();
+  renderScene: function(route, nav) {
+    switch (route.id) {
+      case 'siteall':
+        return <SiteallScreen navigator={nav} />;
+      case 'baidu':
+        return <BaiduScreen navigator={nav} />;
+      case 'history':
+        return <HistoryScreen navigator={nav} />;
+      default:
+        return (
+          <NavMenu
+            message={route.message}
+            navigator={nav}
+            onExampleExit={this.props.onExampleExit}
+          />
+        );
     }
+  },
 
+  render: function() {
     return (
-      <View style={{flex: 1}}>
-        <ToolbarAndroid
-            style={styles.toolbar}
-            titleColor="white"
-            title="demo"
-        />
-        <ListView
-          dataSource={this.state.dataSource}
-          renderRow={this.renderMovie}
-          style={styles.listView}
-        />
-      </View>
+      <Navigator
+        ref={this._setNavigatorRef}
+        style={styles.container}
+        initialRoute={{ message: '爱站工具', }}
+        renderScene={this.renderScene}
+        configureScene={(route) => {
+          if (route.sceneConfig) {
+            return route.sceneConfig;
+          }
+          return Navigator.SceneConfigs.FloatFromBottom;
+        }}
+      />
     );
   },
 
-  //视图1加载中
-  renderLoadingView: function() {
-    return (
-      <View style={styles.container}>
-        <Text>
-          Loading movies...
-        </Text>
-      </View>
-    );
+
+  componentWillUnmount: function() {
+    this._listeners && this._listeners.forEach(listener => listener.remove());
   },
 
-  //视图2显示列表
-  renderMovie: function(movie) {
-    return (
-      <View style={styles.container}>
-        <Image
-          source={{uri: movie.posters.thumbnail}}
-          style={styles.thumbnail}
-        />
-        <View style={styles.rightContainer}>
-          <Text style={styles.title}>{movie.title}</Text>
-          <Text style={styles.year}>上映时间：{movie.year}</Text>
-        </View>
-      </View>
-    );
+  _setNavigatorRef: function(navigator) {
+    if (navigator !== this._navigator) {
+      this._navigator = navigator;
+
+      if (navigator) {
+        var callback = (event) => {
+          console.log(
+            `test: event ${event.type}`,
+            {
+              route: JSON.stringify(event.data.route),
+              target: event.target,
+              type: event.type,
+            }
+          );
+        };
+        // Observe focus change events from the owner.
+        this._listeners = [
+          navigator.navigationContext.addListener('willfocus', callback),
+          navigator.navigationContext.addListener('didfocus', callback),
+        ];
+      }
+    }
   },
 });
 
 var styles = StyleSheet.create({
+  messageText: {
+    fontSize: 17,
+    fontWeight: '500',
+    padding: 15,
+    marginTop: 50,
+    marginLeft: 15,
+  },
   container: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
   },
-  rightContainer: {
+  button: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderBottomWidth: 1 / PixelRatio.get(),
+    borderBottomColor: '#CDCDCD',
+  },
+  buttonText: {
+    fontSize: 17,
+    fontWeight: '500',
+  },
+  scene: {
     flex: 1,
-    left:10,
-  },
-  title: {
-    fontSize: 18,
-    marginBottom: 8,
-    textAlign: 'left',
-  },
-  year: {
-    fontSize: 14,
-    textAlign: 'left',
-  },
-  thumbnail: {
-    width: 53,
-    height: 81,
-    borderWidth: 0.5,
-    borderColor: 'black'
-  },
-  listView: {
-    paddingTop: 0,
-    backgroundColor: '#F5FCFF',
-  },
-  toolbar: {
-    backgroundColor: '#a9a9a9',
-    height: 56,
-  },
+    paddingTop: 20,
+    backgroundColor: '#EAEAEA',
+  }
 });
 
 AppRegistry.registerComponent('test', () => test);
+
+test.external = true;
+
+module.exports = test;
