@@ -16,140 +16,96 @@
 
 var React = require('react-native');
 var {
-  PixelRatio,
-  Navigator,
-  ScrollView,
+  AppRegistry,
   StyleSheet,
   Text,
-  TouchableHighlight,
+  View,
+  ListView,
+  Image,
   TouchableOpacity,
+  ToastAndroid,
+  ToolbarAndroid,
+  Alert,
+  BackAndroid,
 } = React;
 
-var cssVar = require('cssVar');
-
-class NavButton extends React.Component {
-  render() {
-    return (
-      <TouchableHighlight
-        style={styles.button}
-        underlayColor="#B5B5B5"
-        onPress={this.props.onPress}>
-        <Text style={styles.buttonText}>{this.props.text}</Text>
-      </TouchableHighlight>
-    );
+BackAndroid.addEventListener('hardwareBackPress', function() {
+  if(_navigator == null){
+    return false;
   }
-}
-
-var NavigationBarRouteMapper = {
-
-  LeftButton: function(route, navigator, index, navState) {
-    if (index === 0) {
-      return null;
-    }
-
-    var previousRoute = navState.routeStack[index - 1];
-    return (
-      <TouchableOpacity
-        onPress={() => navigator.pop()}
-        style={styles.navBarLeftButton}>
-        <Text style={[styles.navBarText, styles.navBarButtonText]}>
-          Previous
-        </Text>
-      </TouchableOpacity>
-    );
-  },
-
-  RightButton: function(route, navigator, index, navState) {
-    return (
-      <TouchableOpacity
-        onPress={() => navigator.push(newRandomRoute())}
-        style={styles.navBarRightButton}>
-        <Text style={[styles.navBarText, styles.navBarButtonText]}>
-          Next
-        </Text>
-      </TouchableOpacity>
-    );
-  },
-
-  Title: function(route, navigator, index, navState) {
-    return (
-      <Text style={[styles.navBarText, styles.navBarTitleText]}>
-        {route.title} [{index}]
-      </Text>
-    );
-  },
-
-};
-
-function newRandomRoute() {
-  return {
-    title: '#' + Math.ceil(Math.random() * 1000),
-  };
-}
-
+  if(_navigator.getCurrentRoutes().length === 1){
+    return false;
+  }
+  _navigator.pop();
+  return true;
+});
+var _navigator ;
 var baiduScreen = React.createClass({
 
-  componentWillMount: function() {
-    var navigator = this.props.navigator;
-
-    var callback = (event) => {
-      console.log(
-        `baiduScreen : event ${event.type}`,
-        {
-          route: JSON.stringify(event.data.route),
-          target: event.target,
-          type: event.type,
-        }
-      );
+  getInitialState: function(){
+    _navigator = this.props.navigator;
+    return {
+        dataSource: new ListView.DataSource({
+        rowHasChanged: (row1, row2) => row1 !== row2,
+        }),
+        loaded: false,
     };
-
-    // Observe focus change events from this component.
-    this._listeners = [
-      navigator.navigationContext.addListener('willfocus', callback),
-      navigator.navigationContext.addListener('didfocus', callback),
-    ];
+  },
+  componentDidMount: function() {
+    this.fetchData();
   },
 
-  componentWillUnmount: function() {
-    this._listeners && this._listeners.forEach(listener => listener.remove());
+  fetchData : function(){
+    fetch('http://api.rottentomatoes.com/api/public/v1.0/lists/movies/in_theaters.json?apikey=7waqfqbprs7pajbz28mqf6vz&PAGE_SIZE=2' )
+    .then((response) => response.json()) //response.text())
+    .then((responseData) => {
+      this.setState({
+           dataSource: this.state.dataSource.cloneWithRows(responseData.movies),
+           loaded: true,
+         });
+    })
+    .catch((error) => {
+      console.warn(error);
+    }).done();
+    //console.warn('请求是异步的:'+new Date().getMilliseconds());
+  },
+  renderLoadingView: function() {
+      return (
+        <View style={styles.container}>
+         <Text>
+           Loading movies...
+          </Text>
+        </View>
+      );
+  },
+
+  renderMovie: function(movie) {
+     return (
+        <View style={styles.container}>
+        <Text style={styles.title}>{movie.title}</Text>
+        </View>
+    );
   },
 
   render: function() {
+    if (!this.state.loaded) {
+	    return this.renderLoadingView();
+    }
     return (
-      <Navigator
-        debugOverlay={false}
-        style={styles.appContainer}
-        initialRoute={newRandomRoute()}
-        renderScene={(route, navigator) => (
-          <ScrollView style={styles.scene}>
-            <Text style={styles.messageText}>{route.content}</Text>
-            <NavButton
-              onPress={() => {
-                navigator.immediatelyResetRouteStack([
-                  newRandomRoute(),
-                  newRandomRoute(),
-                  newRandomRoute(),
-                ]);
-              }}
-              text="Reset w/ 3 scenes"
-            />
-            <NavButton
-              onPress={() => {
-                this.props.navigator.pop();
-              }}
-              text="Exit NavigationBar Example"
-            />
-          </ScrollView>
-        )}
-        navigationBar={
-          <Navigator.NavigationBar
-            routeMapper={NavigationBarRouteMapper}
-            style={styles.navBar}
-          />
-        }
-      />
+      <View style={{flex: 1}}>
+        <ToolbarAndroid
+            style={styles.toolbar}
+            titleColor="white"
+            title="demo"
+        />
+        <ListView
+           dataSource={this.state.dataSource}
+           renderRow={this.renderMovie}
+           style={styles.listView}
+         />
+        </View>
     );
-  },
+  }
 
 });
 
@@ -162,35 +118,16 @@ var styles = StyleSheet.create({
     marginLeft: 15,
   },
   button: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderBottomWidth: 1 / PixelRatio.get(),
-    borderBottomColor: '#CDCDCD',
+    width : 180,
+	height: 50,
+	justifyContent:'center',
+	backgroundColor: '#e2e2e2',
+	alignItems:'center',
+	margin: 10,
   },
   buttonText: {
     fontSize: 17,
     fontWeight: '500',
-  },
-  navBar: {
-    backgroundColor: 'white',
-  },
-  navBarText: {
-    fontSize: 16,
-    marginVertical: 10,
-  },
-  navBarTitleText: {
-    color: cssVar('fbui-bluegray-60'),
-    fontWeight: '500',
-    marginVertical: 9,
-  },
-  navBarLeftButton: {
-    paddingLeft: 10,
-  },
-  navBarRightButton: {
-    paddingRight: 10,
-  },
-  navBarButtonText: {
-    color: cssVar('fbui-accent-blue'),
   },
   scene: {
     flex: 1,
