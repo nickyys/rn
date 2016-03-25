@@ -17,6 +17,7 @@ var {
 
 var SiteallScreen = require('./SiteallScreen');
 var BaiduScreen = require('./BaiduScreen');
+var ShowScreen = require('./ShowScreen');
 var HistoryScreen = require('./HistoryScreen');
 
 class NavButton extends React.Component {
@@ -75,6 +76,8 @@ var test = React.createClass({
         return <BaiduScreen navigator={nav} />;
       case 'history':
         return <HistoryScreen navigator={nav} />;
+      case 'show':
+        return <ShowScreen navigator={nav} sid={route.sid} />;
       default:
         return (
           <NavMenu

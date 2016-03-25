@@ -21,6 +21,7 @@ var {
   Text,
   View,
   ListView,
+  WebView,
   Image,
   TouchableOpacity,
   ToastAndroid,
@@ -40,7 +41,7 @@ BackAndroid.addEventListener('hardwareBackPress', function() {
   return true;
 });
 var _navigator ;
-var baiduScreen = React.createClass({
+var showScreen = React.createClass({
 
   getInitialState: function(){
     _navigator = this.props.navigator;
@@ -56,7 +57,7 @@ var baiduScreen = React.createClass({
   },
 
   fetchData : function(){
-    fetch('http://10.10.0.68:81/demo/sql.php' )
+    fetch('http://10.10.0.68:81/demo/sql.php?id=2' )
     .then((response) => response.json()) //response.text())
     .then((responseData) => {
       this.setState({
@@ -81,24 +82,16 @@ var baiduScreen = React.createClass({
 
   renderMovie: function(movie) {
      return (
-        <TouchableOpacity onPress={() => _navigator.push({id: 'show',sid: movie.id})}>
-        <View style={styles.container}>
-         <Image
-            source={{uri:'http://10.10.0.68:81/'+movie.attach_thumb}}
-            style={styles.thumbnail}
-          />
-          <View style={styles.rightContainer}>
+        <View style={styles.container2}>
             <Text style={styles.title}>{movie.title}</Text>
-            <Text style={styles.year}>栏目ID：{movie.catalog_id}专题ID：{movie.special_id}</Text>
-          </View>
+            <Text style={styles.content}>{movie.content}</Text>
        </View>
-       </TouchableOpacity>
     );
   },
 
   render: function() {
     if (!this.state.loaded) {
-	    return this.renderLoadingView();
+      return this.renderLoadingView();
     }
     return (
       <View style={{flex: 1}}>
@@ -126,20 +119,20 @@ var styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
     },
-  messageText: {
-    fontSize: 17,
-    fontWeight: '500',
-    padding: 15,
-    marginTop: 50,
-    marginLeft: 15,
-  },
+
+    container2: {
+     flex: 1,
+     justifyContent: 'center',
+     alignItems: 'center',
+     backgroundColor: '#F5FCFF',
+   },
   button: {
     width : 180,
-  	height: 50,
-  	justifyContent:'center',
-  	backgroundColor: '#e2e2e2',
-  	alignItems:'center',
-  	margin: 10,
+    height: 50,
+    justifyContent:'center',
+    backgroundColor: '#e2e2e2',
+    alignItems:'center',
+    margin: 10,
   },
   buttonText: {
     fontSize: 17,
@@ -149,34 +142,21 @@ var styles = StyleSheet.create({
     backgroundColor: '#a9a9a9',
     height: 56,
   },
-  rightContainer: {
-      flex: 1,
-      left:10,
-  },
   title: {
+      height:20,
       fontSize: 18,
       marginBottom: 8,
       textAlign: 'left',
   },
-  year: {
+  content: {
       fontSize: 14,
       textAlign: 'left',
   },
-  thumbnail: {
-      width: 53,
-      height: 81,
-      borderWidth: 0.5,
-      borderColor: 'black'
-  },
+
   listView: {
       paddingTop: 0,
       backgroundColor: '#F5FCFF',
   },
-  scene: {
-    flex: 1,
-    paddingTop: 20,
-    backgroundColor: '#EAEAEA',
-  },
 });
 
-module.exports = baiduScreen;
+module.exports = showScreen;
