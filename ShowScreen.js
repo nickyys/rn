@@ -18,15 +18,9 @@ var React = require('react-native');
 var {
   AppRegistry,
   StyleSheet,
-  Text,
   View,
-  ListView,
   WebView,
-  Image,
-  TouchableOpacity,
-  ToastAndroid,
   ToolbarAndroid,
-  Alert,
   BackAndroid,
 } = React;
 
@@ -41,71 +35,35 @@ BackAndroid.addEventListener('hardwareBackPress', function() {
   return true;
 });
 var _navigator ;
+var _url;
+
 var showScreen = React.createClass({
 
   getInitialState: function(){
     _navigator = this.props.navigator;
+    _url = 'http://10.10.0.68:81/demo/sql.php?id='+this.props.sid;
+    //console.warn(_url);
     return {
-        dataSource: new ListView.DataSource({
-        rowHasChanged: (row1, row2) => row1 !== row2,
-        }),
-        loaded: false,
+      loading: true,
     };
-  },
-  componentDidMount: function() {
-    this.fetchData();
-  },
-
-  fetchData : function(){
-    fetch('http://10.10.0.68:81/demo/sql.php?id=2' )
-    .then((response) => response.json()) //response.text())
-    .then((responseData) => {
-      this.setState({
-           dataSource: this.state.dataSource.cloneWithRows(responseData.movies),
-           loaded: true,
-         });
-    })
-    .catch((error) => {
-      console.warn(error);
-    }).done();
-    console.warn('请求是异步的:'+new Date().getMilliseconds());
-  },
-  renderLoadingView: function() {
-      return (
-        <View style={styles.container}>
-         <Text>
-           Loading movies...
-          </Text>
-        </View>
-      );
-  },
-
-  renderMovie: function(movie) {
-     return (
-        <View style={styles.container2}>
-            <Text style={styles.title}>{movie.title}</Text>
-            <Text style={styles.content}>{movie.content}</Text>
-       </View>
-    );
   },
 
   render: function() {
-    if (!this.state.loaded) {
-      return this.renderLoadingView();
-    }
+
     return (
       <View style={{flex: 1}}>
         <ToolbarAndroid
             style={styles.toolbar}
             titleColor="white"
-            title="demo"
+            title="详细内容"
         />
-        <ListView
-           dataSource={this.state.dataSource}
-           renderRow={this.renderMovie}
-           style={styles.listView}
-         />
-        </View>
+        <WebView
+        style={styles.webView}
+        ref={'webview'}
+        html={this.state.topicContent}
+        automaticallyAdjustContentInsets={false}
+        url={_url} />
+      </View>
     );
   }
 

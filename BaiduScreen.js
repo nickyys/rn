@@ -67,7 +67,6 @@ var baiduScreen = React.createClass({
     .catch((error) => {
       console.warn(error);
     }).done();
-    console.warn('请求是异步的:'+new Date().getMilliseconds());
   },
   renderLoadingView: function() {
       return (
